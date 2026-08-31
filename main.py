@@ -154,7 +154,7 @@ class ShopRefresher:
                     self.clickBuy(pos)
                     value.count += 1
 
-            if self.budget >= 30 and self.refresh_count*3 >= milestone and not self.debug:
+            if self.budget >= 30 and self.refresh_count*3 >= milestone:
                 sys.stdout.write(' ' * 80 + '\r')
                 sys.stdout.write(f'{int(milestone/self.budget*100)}% {self.storage.getStatusString()}\r')
                 sys.stdout.flush()
@@ -187,10 +187,6 @@ class ShopRefresher:
         img_array = np.frombuffer(adb_process.stdout, dtype=np.uint8)
         screenshot = cv2.imdecode(img_array, cv2.IMREAD_GRAYSCALE)
         return screenshot
-    
-
-    def generateOffset(self):
-        return (0, 0)
 
     def findItemPosition(self, screen_image, item_image):
         result = cv2.matchTemplate(screen_image, item_image, cv2.TM_CCOEFF_NORMED)
@@ -279,18 +275,6 @@ def saveConfigFile(tap_sleep, budget, random_offset):
     print('Setting saved')
 
 if __name__ == '__main__':
-
-    print('Epic Seven Shop Refresh with ADB')
-    print('Before launching this application')
-    print('Make sure Epic Seven is opened and that ADB is turned on')
-    print('Ingame resolution should be set to 1920 x 1080')
-    print('(relaunch this application if the above conditions are not met)')
-    print()
-    print('It is normal for adb to take a few second to respond')
-    input('when you finish reading, press enter to continue!')
-
-    print()
-
     if not os.path.isdir(os.path.join('adb-assets')):
         print('adb-assets folder is missing!')
         input('Press enter to exit ...')
