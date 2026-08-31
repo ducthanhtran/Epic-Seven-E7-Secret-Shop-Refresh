@@ -78,13 +78,13 @@ class E7Inventory:
             writer.writerow(data)
 
 class ShopRefresher:
-    def __init__(self, tap_sleep:float = 0.3, budget=None, ip_port=None, stop_refresh_key='esc', random_offset = False, debug=False):
+    def __init__(self, tap_sleep:float = 0.3, budget=None, ip_port=None, random_offset = False, debug=False):
         self.loop_active = False
         self.end_of_refresh = True
         self.tap_sleep = tap_sleep
         self.budget = budget
         self.ip_port = ip_port
-        self.stop_refresh_key = stop_refresh_key
+        self.stop_refresh_key = 'esc'
 
         self.random_offset = random_offset
         self.x_offset = 75 if random_offset else 0
@@ -281,13 +281,11 @@ def getDevices(print_output):
 
 CONFIG_FILE = "ADBconfig.ini"
 
-def saveConfigFile(tap_sleep, budget, stop_refresh_key, random_offset):
+def saveConfigFile(tap_sleep, budget, random_offset):
     config = configparser.ConfigParser()
     config["Settings"] = {
         "tap_sleep": str(tap_sleep),
         "budget": str(budget),
-        "stop_refresh_key": str(stop_refresh_key),
-        "random_offset": str(random_offset)
     }
     with open(CONFIG_FILE, "w") as f:
         config.write(f)
@@ -360,43 +358,16 @@ if __name__ == '__main__':
                 print()
             
             input('Press enter to start!')
-            print(f'Press "{config["Settings"]["stop_refresh_key"]}" to terminate anytime!')
             print()
             print('Progress:')
             ADBSHOP = ShopRefresher(tap_sleep=config.getfloat("Settings", "tap_sleep"),
                                     budget=config.getfloat("Settings", "budget"),
-                                    ip_port=ip_port,
-                                    stop_refresh_key=config["Settings"]["stop_refresh_key"],
-                                    random_offset=config.getboolean("Settings", "random_offset"),
-                                    debug=False)
+                                    ip_port=ip_port)
             ADBSHOP.start()
             print()
             input('press enter to exit...')
             sys.exit(0)
-
-
-    stop_refresh_key = 'esc'
-    print("Input the key that you want to use to stop refresh (0-9 a-z /.,';[]) ")
-    print('Leave blank to use "esc" key')
-    stop_refresh_key = input('Key: ')
     
-    if stop_refresh_key:
-        print(f'"{stop_refresh_key}" key will be use to stop refresh')
-    else:
-        stop_refresh_key = 'esc'
-        print('Default "esc" key to stop refresh')
-    print()
-    
-    random_offset = False
-    print('Only enable randomize click after going through a full loop of buying something in debug mode')
-    if input('Enable randomize click (yes/no): ').lower() == 'yes':
-        random_offset = True
-        print('Randomize click enabled')
-    else:
-        print('Randomize click disabled')
-    print()
-    
-
     try:
         tap_sleep = float(input('Tap sleep(in seconds) Recommend - leave blank for 0.3 sec : '))
         tap_sleep = max(0.3, tap_sleep)
@@ -410,10 +381,8 @@ if __name__ == '__main__':
         print('invalid input, default to 1000 skystone budget')
         budget = 1000
     
-    if not debug:
-        print()
-        saveConfigFile(tap_sleep=tap_sleep, budget=budget, stop_refresh_key=stop_refresh_key, random_offset=random_offset)
-        print()
+
+    saveConfigFile(tap_sleep=tap_sleep, budget=budget)
 
     if budget >= 1000:
             ev_cost = 1691.04536 * int(budget) * 2
@@ -425,15 +394,12 @@ if __name__ == '__main__':
             print(f'mys: {ev_mys:.1f}')
             print()
     input('Press enter to start!')
-    print(f'Press "{stop_refresh_key}" to terminate anytime!')
+    print(f'Press ESC to terminate anytime!')
     print()
     print('Progress:')
     ADBSHOP = ShopRefresher(tap_sleep=tap_sleep,
                                budget=budget,
-                               ip_port=ip_port,
-                               stop_refresh_key=stop_refresh_key,
-                               random_offset=random_offset,
-                               debug=debug)
+                               ip_port=ip_port)
     ADBSHOP.start()
     print()
     input('press enter to exit...')
