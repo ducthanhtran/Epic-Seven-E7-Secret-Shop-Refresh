@@ -274,8 +274,9 @@ def saveConfigFile(tap_sleep, budget, random_offset):
         config.write(f)
     print('Setting saved')
 
-if __name__ == '__main__':
-    if not os.path.isdir(os.path.join('adb-assets')):
+
+def main():
+        if not os.path.isdir(os.path.join('adb-assets')):
         print('adb-assets folder is missing!')
         input('Press enter to exit ...')
         sys.exit(0)
@@ -374,3 +375,7 @@ if __name__ == '__main__':
     ADBSHOP.start()
     print()
     input('press enter to exit...')
+
+
+if __name__ == '__main__':
+    main()
