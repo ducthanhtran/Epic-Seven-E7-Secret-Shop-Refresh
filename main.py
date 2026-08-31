@@ -5,7 +5,6 @@ from io import BytesIO
 import time
 import csv
 
-from PIL import Image
 import threading
 import cv2
 import numpy as np
@@ -103,7 +102,6 @@ class E7ADBShopRefresh:
         self.storage = E7Inventory()
         self.screenwidth = 1920
         self.screenheight = 1080
-        self.checkScreenDimension()
 
         self.storage.addItem('cov.png', 'Covenant bookmark', 184000)
         self.storage.addItem('mys.png', 'Mystic medal', 280000)
@@ -201,18 +199,6 @@ class E7ADBShopRefresh:
             print(key, ':', value.count)
         print('Skystone spent:', self.refresh_count*3)
 
-    def checkScreenDimension(self):
-        adb_process = subprocess.run([self.adb_path] + self.device_args + ['exec-out', 'screencap','-p'], stdout=subprocess.PIPE)
-        byte_image = BytesIO(adb_process.stdout)
-        pil_image = Image.open(byte_image)
-        pil_image = np.array(pil_image)
-        y, x, _ = pil_image.shape
-        # self.screenwidth = x
-        # self.screenheight = y
-        if self.screenwidth != x or self.screenheight != y:
-            print(f'current dimension {x} x {y} does not match {self.screenwidth} x {self.screenheight}')
-            input('press enter to exit...')
-            sys.exit(0)
 
     def takeScreenshot(self):
         adb_process = subprocess.run([self.adb_path] + self.device_args + ['exec-out', 'screencap','-p'], stdout=subprocess.PIPE)
