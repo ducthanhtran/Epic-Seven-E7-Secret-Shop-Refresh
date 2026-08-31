@@ -21,7 +21,7 @@ class Item:
     def __repr__(self):
         return f'ShopItem(image={self.image}, price={self.price}, count={self.count})'
 
-class E7Inventory:
+class Inventory:
     def __init__(self):
         self.inventory = dict()
 
@@ -93,7 +93,7 @@ class ShopRefresher:
         self.refresh_count = 0
         self.keyboard_thread = threading.Thread(target=self.checkKeyPress)
         self.adb_path = os.path.join('adb-assets','platform-tools', 'adb')
-        self.storage = E7Inventory()
+        self.storage = Inventory()
         self.screenwidth = 1920
         self.screenheight = 1080
 
