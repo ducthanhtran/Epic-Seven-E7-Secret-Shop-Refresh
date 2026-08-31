@@ -78,7 +78,7 @@ class E7Inventory:
             writer.writerow(data)
 
 class ShopRefresher:
-    def __init__(self, tap_sleep:float = 0.3, budget=None, ip_port=None, random_offset = False, debug=False):
+    def __init__(self, tap_sleep:float = 0.3, budget=None, ip_port=None):
         self.loop_active = False
         self.end_of_refresh = True
         self.tap_sleep = tap_sleep
@@ -86,11 +86,9 @@ class ShopRefresher:
         self.ip_port = ip_port
         self.stop_refresh_key = 'esc'
 
-        self.random_offset = random_offset
-        self.x_offset = 75 if random_offset else 0
-        self.y_offset = 25 if random_offset else 0
+        self.x_offset = 0
+        self.y_offset = 0
 
-        self.debug = debug
         self.device_args = [] if ip_port is None else ['-s', ip_port]
         self.refresh_count = 0
         self.keyboard_thread = threading.Thread(target=self.checkKeyPress)
@@ -101,8 +99,6 @@ class ShopRefresher:
 
         self.storage.addItem('cov.png', 'Covenant bookmark', 184000)
         self.storage.addItem('mys.png', 'Mystic medal', 280000)
-        if self.debug:
-            self.storage.addItem('fb.png', 'Friendship bookmark', 18000)
 
     def start(self):
         self.loop_active = True
@@ -146,8 +142,7 @@ class ShopRefresher:
             
             #swipe 
 
-            xoff, yoff = self.generateOffset()
-            adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'swipe', str(x1+xoff), str(y1+yoff), str(x1+xoff), str(y2+yoff)])
+            adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'swipe', str(x1), str(y1), str(x1), str(y2)])
             time.sleep(1)
 
             if not self.loop_active: break
@@ -195,10 +190,6 @@ class ShopRefresher:
     
 
     def generateOffset(self):
-        if self.random_offset:
-            generate_x_offset = random.randint(-self.x_offset, self.x_offset)
-            generate_y_offset = random.randint(-self.y_offset, self.y_offset)
-            return (generate_x_offset, generate_y_offset)
         return (0, 0)
 
     def findItemPosition(self, screen_image, item_image):
@@ -236,37 +227,33 @@ class ShopRefresher:
             return False
         
         x, y = pos
-        xoff, yoff = self.generateOffset() 
 
         
-        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x+xoff), str(y+yoff)])
+        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x), str(y)])
         time.sleep(self.tap_sleep)
 
         #confirm
         x = self.screenwidth * 0.5677
         y = self.screenheight * 0.7037
-        xoff, yoff = self.generateOffset() 
 
         
-        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x+xoff), str(y+yoff)])
+        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x), str(y)])
         time.sleep(self.tap_sleep)
         time.sleep(1)
     
     def clickRefresh(self):
         x = self.screenwidth * 0.1698
         y = self.screenheight * 0.9138
-        xoff, yoff = self.generateOffset()
      
-        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x+xoff), str(y+yoff)])
+        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x), str(y)])
         time.sleep(self.tap_sleep)
 
         if not self.loop_active: return
         #confirm
         x = self.screenwidth * 0.5828
         y = self.screenheight * 0.6411
-        xoff, yoff = self.generateOffset()
         
-        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x+xoff), str(y+yoff)])
+        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x), str(y)])
         time.sleep(self.tap_sleep)
 
 def getDevices(print_output):
