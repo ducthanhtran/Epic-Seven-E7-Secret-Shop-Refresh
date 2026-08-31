@@ -77,7 +77,7 @@ class E7Inventory:
             data.extend(self.getCount())
             writer.writerow(data)
 
-class E7ADBShopRefresh:
+class ShopRefresher:
     def __init__(self, tap_sleep:float = 0.3, budget=None, ip_port=None, stop_refresh_key='esc', random_offset = False, debug=False):
         self.loop_active = False
         self.end_of_refresh = True
@@ -363,7 +363,7 @@ if __name__ == '__main__':
             print(f'Press "{config["Settings"]["stop_refresh_key"]}" to terminate anytime!')
             print()
             print('Progress:')
-            ADBSHOP = E7ADBShopRefresh(tap_sleep=config.getfloat("Settings", "tap_sleep"),
+            ADBSHOP = ShopRefresher(tap_sleep=config.getfloat("Settings", "tap_sleep"),
                                     budget=config.getfloat("Settings", "budget"),
                                     ip_port=ip_port,
                                     stop_refresh_key=config["Settings"]["stop_refresh_key"],
@@ -428,7 +428,7 @@ if __name__ == '__main__':
     print(f'Press "{stop_refresh_key}" to terminate anytime!')
     print()
     print('Progress:')
-    ADBSHOP = E7ADBShopRefresh(tap_sleep=tap_sleep,
+    ADBSHOP = ShopRefresher(tap_sleep=tap_sleep,
                                budget=budget,
                                ip_port=ip_port,
                                stop_refresh_key=stop_refresh_key,
