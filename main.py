@@ -253,18 +253,19 @@ class ShopRefresher:
         time.sleep(self.tap_sleep)
 
 def getDevices(print_output):
-        check_devices = subprocess.run([adb_path, 'devices'], capture_output=True, text=True)
-        if print_output: print(check_devices.stdout)
-        lines = check_devices.stdout.splitlines()
-        devices = []
-        for line in lines[1:-1]:
-            seq = line.split('\t')
-            devices.append(seq[0])
-        return devices
+    adb_path = os.path.join('adb-assets', 'platform-tools', 'adb')
+    check_devices = subprocess.run([adb_path, 'devices'], capture_output=True, text=True)
+    if print_output: print(check_devices.stdout)
+    lines = check_devices.stdout.splitlines()
+    devices = []
+    for line in lines[1:-1]:
+        seq = line.split('\t')
+        devices.append(seq[0])
+    return devices
 
 CONFIG_FILE = "ADBconfig.ini"
 
-def saveConfigFile(tap_sleep, budget, random_offset):
+def saveConfigFile(tap_sleep, budget):
     config = configparser.ConfigParser()
     config["Settings"] = {
         "tap_sleep": str(tap_sleep),
@@ -276,7 +277,7 @@ def saveConfigFile(tap_sleep, budget, random_offset):
 
 
 def main():
-        if not os.path.isdir(os.path.join('adb-assets')):
+    if not os.path.isdir(os.path.join('adb-assets')):
         print('adb-assets folder is missing!')
         input('Press enter to exit ...')
         sys.exit(0)
@@ -289,6 +290,7 @@ def main():
         
         print('ADB Setup')
         devices = getDevices(True)
+        print(devices)
         print('Type the ip and port of the device that you want to select or add')
         print('By leaving it blank it wil default to 127.0.0.1:5555')
         user_choice = input('Device: ') or 'localhost:5555'
