@@ -13,6 +13,7 @@ import numpy as np
 
 CONFIG_FILE = "config.ini"
 ASSETS_DIR = "assets"
+ADB_PATH = os.path.join(ASSETS_DIR, "platform-tools", "adb")
 
 
 class Item:
@@ -296,19 +297,21 @@ class ShopRefresher:
         time.sleep(self.tap_sleep)
 
 
-def getDevices(print_output):
-    adb_path = os.path.join("adb-assets", "platform-tools", "adb")
-    check_devices = subprocess.run(
-        [adb_path, "devices"], capture_output=True, text=True
-    )
-    if print_output:
-        print(check_devices.stdout)
-    lines = check_devices.stdout.splitlines()
-    devices = []
-    for line in lines[1:-1]:
-        seq = line.split("\t")
-        devices.append(seq[0])
+def get_adb_devices():
+    output = subprocess.check_output([ADB_PATH, "devices"], text=True)
+    lines = output.splitlines()
+    # Cut off first line 'List of devices attached' and last
+    # empty line, thus only considering device strings
+    devices = [line.split('\t')[0] for line in lines[1:-1]]
     return devices
+
+
+def connect_to_device():
+    output = subprocess.check_output([ADB_PATH, "connect", "localhost"], text=True)
+    if "connected" in output:
+        return True
+    else:
+        return False
 
 
 def saveConfigFile(tap_sleep, budget):
@@ -352,6 +355,18 @@ def main() -> None:
         print(f"Using the following config values from {CONFIG_FILE}:")
         print_config(CONFIG_FILE)
 
+    devices = get_adb_devices()
+    if len(devices) != 1:
+        print("Found 0 or more than 1 ADB-devices. Exiting")
+        sys.exit(2)
+    
+    print("Found exactly one ADB-device.")
+    print(f"Trying to connect to {devices[0]}")
+    if not connect_to_device():
+        print("Could not connect on localhost:5555")
+        sys.exit(2)
+    print("Connected on localhost:5555")
+    
     sys.exit(-42)
     ip_port = None
     adb_path = os.path.join("adb-assets", "platform-tools", "adb")
