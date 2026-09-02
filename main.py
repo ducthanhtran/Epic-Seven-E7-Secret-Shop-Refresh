@@ -322,11 +322,37 @@ def saveConfigFile(tap_sleep, budget):
     print("Setting saved")
 
 
-def main():
+def generate_default_config() -> None:
+    config = configparser.ConfigParser()
+    tap_sleec_sec = float(input("Enter sleep (sec) after each tap\n"))
+    skystones_budget = int(input("Enter skystones budget to be used\n"))
+    config["Settings"] = {
+        "tap_sleep_sec": tap_sleec_sec,
+        "skystones_budget": skystones_budget
+    }
+    with open(CONFIG_FILE, 'w') as out:
+        config.write(out)
+
+def print_config(config_path: str) -> None:
+    config = configparser.ConfigParser()
+    config.read_file(open(config_path))
+    for name, value in config.items('Settings'):
+        print(f"\t{name}: {value}")
+
+
+def main() -> None:
     if not os.path.isdir(os.path.join(ASSETS_DIR)):
         print(f"{ASSETS_DIR} folder is missing")
         sys.exit(1)
 
+    if not os.path.isfile(os.path.join(CONFIG_FILE)):
+        print(f"{CONFIG_FILE} missing. A default file is generated")
+        generate_default_config()
+    else:
+        print(f"Using the following config values from {CONFIG_FILE}:")
+        print_config(CONFIG_FILE)
+
+    sys.exit(-42)
     ip_port = None
     adb_path = os.path.join("adb-assets", "platform-tools", "adb")
     devices = getDevices(False)
