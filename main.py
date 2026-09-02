@@ -18,9 +18,6 @@ class Item:
         self.price=price
         self.count=count
 
-    def __repr__(self):
-        return f'ShopItem(image={self.image}, price={self.price}, count={self.count})'
-
 class Inventory:
     def __init__(self):
         self.inventory = dict()
