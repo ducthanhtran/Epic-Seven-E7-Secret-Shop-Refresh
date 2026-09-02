@@ -32,30 +32,6 @@ class Inventory:
         newItem = Item(image, price, count)
         self.inventory[name] = newItem
 
-    def getStatusString(self):
-        status_string = ""
-        for key, value in self.inventory.items():
-            status_string += key[0:4] + ": " + str(value.count) + " "
-        return status_string
-
-    def getName(self):
-        res = []
-        for key in self.inventory.keys():
-            res.append(key)
-        return res
-
-    def getCount(self):
-        res = []
-        for value in self.inventory.values():
-            res.append(value.count)
-        return res
-
-    def getTotalCost(self):
-        sum = 0
-        for value in self.inventory.values():
-            sum += value.price * value.count
-        return sum
-
 
 class Device:
     def __init__(self, tap_sleep_sec: float, swipe_sleep_sec: float):
@@ -175,14 +151,6 @@ class ShopRefresher:
                     self.clickBuy(pos)
                     value.count += 1
 
-            if self.budget >= 30 and self.refresh_count * 3 >= milestone:
-                sys.stdout.write(" " * 80 + "\r")
-                sys.stdout.write(
-                    f"{int(milestone / self.budget * 100)}% {self.inventory.getStatusString()}\r"
-                )
-                sys.stdout.flush()
-                milestone += self.budget // 10
-
             if not self.loop_active:
                 break
             if self.budget:
@@ -194,8 +162,6 @@ class ShopRefresher:
 
         self.end_of_refresh = True
         self.loop_active = False
-        if self.refresh_count * 3 != self.budget:
-            print("100%")
 
     def findItemPosition(self, screen_image, item_image):
         result = cv2.matchTemplate(screen_image, item_image, cv2.TM_CCOEFF_NORMED)
