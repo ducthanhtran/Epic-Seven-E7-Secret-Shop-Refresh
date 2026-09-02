@@ -25,7 +25,7 @@ class Item:
 
 class Inventory:
     def __init__(self):
-        self.inventory = {}
+        self.inventory: dict[str, Item] = {}
 
     def addItem(self, path: str, name="", price=0, count=0):
         image = cv2.imread(os.path.join("adb-assets", path))
@@ -90,17 +90,15 @@ class ShopRefresher:
 
         self.x_offset = 0
         self.y_offset = 0
-
-        self.device_args = [] if ip_port is None else ["-s", ip_port]
         self.refresh_count = 0
         self.keyboard_thread = threading.Thread(target=self.checkKeyPress)
         self.adb_path = os.path.join("adb-assets", "platform-tools", "adb")
-        self.storage = Inventory()
+        self.inventory = Inventory()
         self.screenwidth = 1920
         self.screenheight = 1080
 
-        self.storage.addItem("cov.png", "Covenant bookmark", 184000)
-        self.storage.addItem("mys.png", "Mystic medal", 280000)
+        self.inventory.addItem("cov.png", "Covenant bookmark", 184000)
+        self.inventory.addItem("mys.png", "Mystic medal", 280000)
 
     def start(self):
         self.loop_active = True
@@ -133,7 +131,7 @@ class ShopRefresher:
                 break
             # look at shop (page 1)
             screenshot = self.takeScreenshot()
-            for key, value in self.storage.inventory.items():
+            for key, value in self.inventory.inventory.items():
                 pos = self.findItemPosition(screenshot, value.image)
                 if pos is not None:
                     self.clickBuy(pos)
@@ -156,7 +154,7 @@ class ShopRefresher:
                 break
             # look at shop (page 2)
             screenshot = self.takeScreenshot()
-            for key, value in self.storage.inventory.items():
+            for key, value in self.inventory.inventory.items():
                 pos = self.findItemPosition(screenshot, value.image)
                 if pos is not None and key not in brought:
                     self.clickBuy(pos)
@@ -165,7 +163,7 @@ class ShopRefresher:
             if self.budget >= 30 and self.refresh_count * 3 >= milestone:
                 sys.stdout.write(" " * 80 + "\r")
                 sys.stdout.write(
-                    f"{int(milestone / self.budget * 100)}% {self.storage.getStatusString()}\r"
+                    f"{int(milestone / self.budget * 100)}% {self.inventory.getStatusString()}\r"
                 )
                 sys.stdout.flush()
                 milestone += self.budget // 10
@@ -184,14 +182,14 @@ class ShopRefresher:
         if self.refresh_count * 3 != self.budget:
             print("100%")
         duration = time.time() - start_time
-        self.storage.writeToCSV(
+        self.inventory.writeToCSV(
             duration=duration, skystone_spent=self.refresh_count * 3
         )
         self.printResult()
 
     def printResult(self):
         print("\n---Result---")
-        for key, value in self.storage.inventory.items():
+        for key, value in self.inventory.inventory.items():
             print(key, ":", value.count)
         print("Skystone spent:", self.refresh_count * 3)
 
