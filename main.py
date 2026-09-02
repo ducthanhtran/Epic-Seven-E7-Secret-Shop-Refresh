@@ -1,5 +1,4 @@
 import configparser
-import csv
 import os
 import subprocess
 import sys
@@ -57,28 +56,6 @@ class Inventory:
             sum += value.price * value.count
         return sum
 
-    def writeToCSV(self, duration, skystone_spent):
-        duration = round(duration, 2)
-
-        res_folder = "ShopRefreshHistory"
-        if not os.path.exists(res_folder):
-            os.makedirs(res_folder)
-
-        history_file = "ADB_History.csv"
-
-        path = os.path.join(res_folder, history_file)
-        if not os.path.isfile(path):
-            with open(path, "w", newline="") as file:
-                writer = csv.writer(file)
-                column_name = ["Duration", "Skystone spent", "Gold spent"]
-                column_name.extend(self.getName())
-                writer.writerow(column_name)
-        with open(path, "a", newline="") as file:
-            writer = csv.writer(file)
-            data = [duration, skystone_spent, self.getTotalCost()]
-            data.extend(self.getCount())
-            writer.writerow(data)
-
 
 class Device:
     def __init__(self, tap_sleep_sec: float, swipe_sleep_sec: float):
@@ -119,7 +96,7 @@ class Device:
         time.sleep(self.swipe_sleep_sec)
 
 class ShopRefresher:
-    def __init__(self, tap_sleep: float, budget: int):
+    def __init__(self, tap_sleep: float, budget: int, device: Device):
         self.loop_active = False
         self.end_of_refresh = True
         self.tap_sleep = tap_sleep
@@ -137,7 +114,7 @@ class ShopRefresher:
 
         self.inventory.addItem("cov.png", "Covenant bookmark", 184000)
         self.inventory.addItem("mys.png", "Mystic medal", 280000)
-        self.device = Device(tap_sleep, tap_sleep) # TODO: use unified sleep or swipe sleep as well
+        self.device: Device = device
 
     def start(self):
         self.loop_active = True
@@ -219,26 +196,6 @@ class ShopRefresher:
         self.loop_active = False
         if self.refresh_count * 3 != self.budget:
             print("100%")
-        duration = time.time() - start_time
-        self.inventory.writeToCSV(
-            duration=duration, skystone_spent=self.refresh_count * 3
-        )
-        self.printResult()
-
-    def printResult(self):
-        print("\n---Result---")
-        for key, value in self.inventory.inventory.items():
-            print(key, ":", value.count)
-        print("Skystone spent:", self.refresh_count * 3)
-
-    def takeScreenshot(self):
-        adb_process = subprocess.run(
-            [self.adb_path] + self.device_args + ["exec-out", "screencap", "-p"],
-            stdout=subprocess.PIPE,
-        )
-        img_array = np.frombuffer(adb_process.stdout, dtype=np.uint8)
-        screenshot = cv2.imdecode(img_array, cv2.IMREAD_GRAYSCALE)
-        return screenshot
 
     def findItemPosition(self, screen_image, item_image):
         result = cv2.matchTemplate(screen_image, item_image, cv2.TM_CCOEFF_NORMED)
@@ -374,7 +331,9 @@ def main() -> None:
     
     print("Found exactly one ADB-device.")
     print(f"Trying to connect to {devices[0]}")
-    if not connect_to_device():
+    tap_sleep_sec: float = config.getfloat('Settings', 'tap_sleep_sec')
+    device = Device(tap_sleep_sec, tap_sleep_sec) # TODO: use unified sleep or swipe sleep as well
+    if not device.connect():
         print("Could not connect on localhost:5555")
         sys.exit(2)
     print("Connected on localhost:5555")
@@ -387,7 +346,7 @@ def main() -> None:
     ADBSHOP = ShopRefresher(
         tap_sleep=config.getfloat("Settings", "tap_sleep"),
         budget=config.getfloat("Settings", "budget"),
-        ip_port=ip_port,
+        device=device,
     )
     ADBSHOP.start()
     
