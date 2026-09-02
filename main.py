@@ -159,7 +159,7 @@ class ShopRefresher:
             if not self.loop_active:
                 break
             # look at shop (page 1)
-            screenshot = self.takeScreenshot()
+            screenshot = self.device.take_screenshot()
             for key, value in self.inventory.inventory.items():
                 pos = self.findItemPosition(screenshot, value.image)
                 if pos is not None:
@@ -174,7 +174,6 @@ class ShopRefresher:
 
             adb_process = subprocess.run(
                 [self.adb_path]
-                + self.device_args
                 + ["shell", "input", "swipe", str(x1), str(y1), str(x1), str(y2)]
             )
             time.sleep(1)
@@ -182,7 +181,7 @@ class ShopRefresher:
             if not self.loop_active:
                 break
             # look at shop (page 2)
-            screenshot = self.takeScreenshot()
+            screenshot = self.device.take_screenshot()
             for key, value in self.inventory.inventory.items():
                 pos = self.findItemPosition(screenshot, value.image)
                 if pos is not None and key not in brought:
@@ -248,7 +247,6 @@ class ShopRefresher:
         y = self.screenheight * 0.3835
         adb_process = subprocess.run(
             [self.adb_path]
-            + self.device_args
             + ["shell", "input", "tap", str(x), str(y)]
         )
         time.sleep(0.5)
@@ -258,7 +256,6 @@ class ShopRefresher:
         y = self.screenheight * 0.2462
         adb_process = subprocess.run(
             [self.adb_path]
-            + self.device_args
             + ["shell", "input", "tap", str(x), str(y)]
         )
         time.sleep(0.5)
@@ -268,7 +265,6 @@ class ShopRefresher:
         y = self.screenheight * 0.3835
         adb_process = subprocess.run(
             [self.adb_path]
-            + self.device_args
             + ["shell", "input", "tap", str(x), str(y)]
         )
         time.sleep(0.5)
@@ -281,7 +277,6 @@ class ShopRefresher:
 
         adb_process = subprocess.run(
             [self.adb_path]
-            + self.device_args
             + ["shell", "input", "tap", str(x), str(y)]
         )
         time.sleep(self.tap_sleep)
@@ -292,7 +287,6 @@ class ShopRefresher:
 
         adb_process = subprocess.run(
             [self.adb_path]
-            + self.device_args
             + ["shell", "input", "tap", str(x), str(y)]
         )
         time.sleep(self.tap_sleep)
@@ -304,7 +298,6 @@ class ShopRefresher:
 
         adb_process = subprocess.run(
             [self.adb_path]
-            + self.device_args
             + ["shell", "input", "tap", str(x), str(y)]
         )
         time.sleep(self.tap_sleep)
@@ -317,7 +310,6 @@ class ShopRefresher:
 
         adb_process = subprocess.run(
             [self.adb_path]
-            + self.device_args
             + ["shell", "input", "tap", str(x), str(y)]
         )
         time.sleep(self.tap_sleep)
