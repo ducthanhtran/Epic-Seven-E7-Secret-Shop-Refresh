@@ -13,24 +13,25 @@ import numpy as np
 
 class Item:
     def __init__(self, image=None, price=0, count=0):
-        self.image=image
-        self.price=price
-        self.count=count
+        self.image = image
+        self.price = price
+        self.count = count
+
 
 class Inventory:
     def __init__(self):
         self.inventory = dict()
 
-    def addItem(self, path:str, name='', price=0, count=0):
-        image = cv2.imread(os.path.join('adb-assets', path))
+    def addItem(self, path: str, name="", price=0, count=0):
+        image = cv2.imread(os.path.join("adb-assets", path))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         newItem = Item(image, price, count)
         self.inventory[name] = newItem
 
     def getStatusString(self):
-        status_string = ''
+        status_string = ""
         for key, value in self.inventory.items():
-            status_string += key[0:4] + ': ' + str(value.count) + ' '
+            status_string += key[0:4] + ": " + str(value.count) + " "
         return status_string
 
     def getName(self):
@@ -38,13 +39,13 @@ class Inventory:
         for key in self.inventory.keys():
             res.append(key)
         return res
-    
+
     def getCount(self):
         res = []
         for value in self.inventory.values():
             res.append(value.count)
         return res
-    
+
     def getTotalCost(self):
         sum = 0
         for value in self.inventory.values():
@@ -54,47 +55,48 @@ class Inventory:
     def writeToCSV(self, duration, skystone_spent):
         duration = round(duration, 2)
 
-        res_folder = 'ShopRefreshHistory'
+        res_folder = "ShopRefreshHistory"
         if not os.path.exists(res_folder):
             os.makedirs(res_folder)
 
-        history_file = 'ADB_History.csv'
+        history_file = "ADB_History.csv"
 
         path = os.path.join(res_folder, history_file)
         if not os.path.isfile(path):
-            with open(path, 'w', newline='') as file:
+            with open(path, "w", newline="") as file:
                 writer = csv.writer(file)
-                column_name = ['Duration', 'Skystone spent', 'Gold spent']
+                column_name = ["Duration", "Skystone spent", "Gold spent"]
                 column_name.extend(self.getName())
                 writer.writerow(column_name)
-        with open(path, 'a', newline='') as file:
+        with open(path, "a", newline="") as file:
             writer = csv.writer(file)
             data = [duration, skystone_spent, self.getTotalCost()]
             data.extend(self.getCount())
             writer.writerow(data)
 
+
 class ShopRefresher:
-    def __init__(self, tap_sleep:float = 0.3, budget=None, ip_port=None):
+    def __init__(self, tap_sleep: float = 0.3, budget=None, ip_port=None):
         self.loop_active = False
         self.end_of_refresh = True
         self.tap_sleep = tap_sleep
         self.budget = budget
         self.ip_port = ip_port
-        self.stop_refresh_key = 'esc'
+        self.stop_refresh_key = "esc"
 
         self.x_offset = 0
         self.y_offset = 0
 
-        self.device_args = [] if ip_port is None else ['-s', ip_port]
+        self.device_args = [] if ip_port is None else ["-s", ip_port]
         self.refresh_count = 0
         self.keyboard_thread = threading.Thread(target=self.checkKeyPress)
-        self.adb_path = os.path.join('adb-assets','platform-tools', 'adb')
+        self.adb_path = os.path.join("adb-assets", "platform-tools", "adb")
         self.storage = Inventory()
         self.screenwidth = 1920
         self.screenheight = 1080
 
-        self.storage.addItem('cov.png', 'Covenant bookmark', 184000)
-        self.storage.addItem('mys.png', 'Mystic medal', 280000)
+        self.storage.addItem("cov.png", "Covenant bookmark", 184000)
+        self.storage.addItem("mys.png", "Mystic medal", 280000)
 
     def start(self):
         self.loop_active = True
@@ -103,29 +105,29 @@ class ShopRefresher:
         self.refreshShop()
 
     def checkKeyPress(self):
-        while(self.loop_active and not self.end_of_refresh):
+        while self.loop_active and not self.end_of_refresh:
             self.loop_active = not keyboard.is_pressed(self.stop_refresh_key)
         self.loop_active = False
-        print('Shop refresh terminated!')
+        print("Shop refresh terminated!")
 
     def refreshShop(self):
         self.clickShop()
-        #time needed for item to drop in after refresh (0.5 second loading + drop 1 second)
+        # time needed for item to drop in after refresh (0.5 second loading + drop 1 second)
         sliding_time = 1.5
-        
+
         start_time = time.time()
-        milestone = self.budget//10
-        
+        milestone = self.budget // 10
+
         x1 = 0.6250 * self.screenwidth
         y1 = 0.7481 * self.screenheight
         y2 = 0.3629 * self.screenheight
         while self.loop_active:
-
             time.sleep(sliding_time)
             brought = set()
 
-            if not self.loop_active: break
-            #look at shop (page 1)
+            if not self.loop_active:
+                break
+            # look at shop (page 1)
             screenshot = self.takeScreenshot()
             for key, value in self.storage.inventory.items():
                 pos = self.findItemPosition(screenshot, value.image)
@@ -134,15 +136,21 @@ class ShopRefresher:
                     value.count += 1
                     brought.add(key)
 
-            if not self.loop_active: break
-            
-            #swipe 
+            if not self.loop_active:
+                break
 
-            adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'swipe', str(x1), str(y1), str(x1), str(y2)])
+            # swipe
+
+            adb_process = subprocess.run(
+                [self.adb_path]
+                + self.device_args
+                + ["shell", "input", "swipe", str(x1), str(y1), str(x1), str(y2)]
+            )
             time.sleep(1)
 
-            if not self.loop_active: break
-            #look at shop (page 2)
+            if not self.loop_active:
+                break
+            # look at shop (page 2)
             screenshot = self.takeScreenshot()
             for key, value in self.storage.inventory.items():
                 pos = self.findItemPosition(screenshot, value.image)
@@ -150,36 +158,44 @@ class ShopRefresher:
                     self.clickBuy(pos)
                     value.count += 1
 
-            if self.budget >= 30 and self.refresh_count*3 >= milestone:
-                sys.stdout.write(' ' * 80 + '\r')
-                sys.stdout.write(f'{int(milestone/self.budget*100)}% {self.storage.getStatusString()}\r')
+            if self.budget >= 30 and self.refresh_count * 3 >= milestone:
+                sys.stdout.write(" " * 80 + "\r")
+                sys.stdout.write(
+                    f"{int(milestone / self.budget * 100)}% {self.storage.getStatusString()}\r"
+                )
                 sys.stdout.flush()
-                milestone += self.budget//10
-            
-            if not self.loop_active: break
+                milestone += self.budget // 10
+
+            if not self.loop_active:
+                break
             if self.budget:
-                if self.refresh_count >= self.budget//3:
+                if self.refresh_count >= self.budget // 3:
                     break
 
             self.clickRefresh()
             self.refresh_count += 1
-        
+
         self.end_of_refresh = True
         self.loop_active = False
-        if self.refresh_count*3 != self.budget: print('100%') 
-        duration = time.time()-start_time
-        self.storage.writeToCSV(duration=duration, skystone_spent=self.refresh_count*3)
+        if self.refresh_count * 3 != self.budget:
+            print("100%")
+        duration = time.time() - start_time
+        self.storage.writeToCSV(
+            duration=duration, skystone_spent=self.refresh_count * 3
+        )
         self.printResult()
-    
-    def printResult(self):
-        print('\n---Result---')
-        for key, value in self.storage.inventory.items():
-            print(key, ':', value.count)
-        print('Skystone spent:', self.refresh_count*3)
 
+    def printResult(self):
+        print("\n---Result---")
+        for key, value in self.storage.inventory.items():
+            print(key, ":", value.count)
+        print("Skystone spent:", self.refresh_count * 3)
 
     def takeScreenshot(self):
-        adb_process = subprocess.run([self.adb_path] + self.device_args + ['exec-out', 'screencap','-p'], stdout=subprocess.PIPE)
+        adb_process = subprocess.run(
+            [self.adb_path] + self.device_args + ["exec-out", "screencap", "-p"],
+            stdout=subprocess.PIPE,
+        )
         img_array = np.frombuffer(adb_process.stdout, dtype=np.uint8)
         screenshot = cv2.imdecode(img_array, cv2.IMREAD_GRAYSCALE)
         return screenshot
@@ -187,7 +203,7 @@ class ShopRefresher:
     def findItemPosition(self, screen_image, item_image):
         result = cv2.matchTemplate(screen_image, item_image, cv2.TM_CCOEFF_NORMED)
         loc = np.where(result >= 0.75)
-        
+
         if loc[0].size > 0:
             x = loc[1][0] + self.screenwidth * 0.4718
             y = loc[0][0] + self.screenheight * 0.1000
@@ -196,70 +212,103 @@ class ShopRefresher:
         return None
 
     def clickShop(self):
-        #newshop
+        # newshop
         x = self.screenwidth * 0.0411
         y = self.screenheight * 0.3835
-        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x), str(y)])
+        adb_process = subprocess.run(
+            [self.adb_path]
+            + self.device_args
+            + ["shell", "input", "tap", str(x), str(y)]
+        )
         time.sleep(0.5)
 
-        #oldshop
+        # oldshop
         x = self.screenwidth * 0.4406
         y = self.screenheight * 0.2462
-        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x), str(y)])
+        adb_process = subprocess.run(
+            [self.adb_path]
+            + self.device_args
+            + ["shell", "input", "tap", str(x), str(y)]
+        )
         time.sleep(0.5)
 
-        #newshop
+        # newshop
         x = self.screenwidth * 0.0411
         y = self.screenheight * 0.3835
-        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x), str(y)])
+        adb_process = subprocess.run(
+            [self.adb_path]
+            + self.device_args
+            + ["shell", "input", "tap", str(x), str(y)]
+        )
         time.sleep(0.5)
 
     def clickBuy(self, pos):
         if pos is None:
             return False
-        
+
         x, y = pos
 
-        
-        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x), str(y)])
+        adb_process = subprocess.run(
+            [self.adb_path]
+            + self.device_args
+            + ["shell", "input", "tap", str(x), str(y)]
+        )
         time.sleep(self.tap_sleep)
 
-        #confirm
+        # confirm
         x = self.screenwidth * 0.5677
         y = self.screenheight * 0.7037
 
-        
-        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x), str(y)])
+        adb_process = subprocess.run(
+            [self.adb_path]
+            + self.device_args
+            + ["shell", "input", "tap", str(x), str(y)]
+        )
         time.sleep(self.tap_sleep)
         time.sleep(1)
-    
+
     def clickRefresh(self):
         x = self.screenwidth * 0.1698
         y = self.screenheight * 0.9138
-     
-        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x), str(y)])
+
+        adb_process = subprocess.run(
+            [self.adb_path]
+            + self.device_args
+            + ["shell", "input", "tap", str(x), str(y)]
+        )
         time.sleep(self.tap_sleep)
 
-        if not self.loop_active: return
-        #confirm
+        if not self.loop_active:
+            return
+        # confirm
         x = self.screenwidth * 0.5828
         y = self.screenheight * 0.6411
-        
-        adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x), str(y)])
+
+        adb_process = subprocess.run(
+            [self.adb_path]
+            + self.device_args
+            + ["shell", "input", "tap", str(x), str(y)]
+        )
         time.sleep(self.tap_sleep)
 
+
 def getDevices(print_output):
-    adb_path = os.path.join('adb-assets', 'platform-tools', 'adb')
-    check_devices = subprocess.run([adb_path, 'devices'], capture_output=True, text=True)
-    if print_output: print(check_devices.stdout)
+    adb_path = os.path.join("adb-assets", "platform-tools", "adb")
+    check_devices = subprocess.run(
+        [adb_path, "devices"], capture_output=True, text=True
+    )
+    if print_output:
+        print(check_devices.stdout)
     lines = check_devices.stdout.splitlines()
     devices = []
     for line in lines[1:-1]:
-        seq = line.split('\t')
+        seq = line.split("\t")
         devices.append(seq[0])
     return devices
 
+
 CONFIG_FILE = "ADBconfig.ini"
+
 
 def saveConfigFile(tap_sleep, budget):
     config = configparser.ConfigParser()
@@ -269,51 +318,52 @@ def saveConfigFile(tap_sleep, budget):
     }
     with open(CONFIG_FILE, "w") as f:
         config.write(f)
-    print('Setting saved')
+    print("Setting saved")
 
 
 def main():
-    if not os.path.isdir(os.path.join('adb-assets')):
-        print('adb-assets folder is missing!')
-        input('Press enter to exit ...')
+    if not os.path.isdir(os.path.join("adb-assets")):
+        print("adb-assets folder is missing!")
+        input("Press enter to exit ...")
         sys.exit(0)
 
     ip_port = None
-    adb_path = os.path.join('adb-assets', 'platform-tools', 'adb')
+    adb_path = os.path.join("adb-assets", "platform-tools", "adb")
     devices = getDevices(False)
 
-    while(len(devices) == 0 or len(devices) > 1):
-        
-        print('ADB Setup')
+    while len(devices) == 0 or len(devices) > 1:
+        print("ADB Setup")
         devices = getDevices(True)
         print(devices)
-        print('Type the ip and port of the device that you want to select or add')
-        print('By leaving it blank it wil default to 127.0.0.1:5555')
-        user_choice = input('Device: ') or 'localhost:5555'
+        print("Type the ip and port of the device that you want to select or add")
+        print("By leaving it blank it wil default to 127.0.0.1:5555")
+        user_choice = input("Device: ") or "localhost:5555"
         if user_choice in devices:
             ip_port = user_choice
         else:
-            test_connection = subprocess.run([adb_path, 'connect', user_choice], capture_output=True, text=True)
+            test_connection = subprocess.run(
+                [adb_path, "connect", user_choice], capture_output=True, text=True
+            )
             print(test_connection.stdout)
-            test_res = test_connection.stdout.split(' ')
-            if test_res[0] == 'connected' and test_res[1] == 'to':
+            test_res = test_connection.stdout.split(" ")
+            if test_res[0] == "connected" and test_res[1] == "to":
                 ip_port = user_choice
                 break
             else:
-                print('Fail to connect, try again')
-    
+                print("Fail to connect, try again")
+
     if os.path.exists(CONFIG_FILE):
         config = configparser.ConfigParser()
         config.read(CONFIG_FILE)
         print("Last Saved Setting:")
         for section in config.sections():
             for key, value in config[section].items():
-                print(f'{key} = {value}')
+                print(f"{key} = {value}")
         print()
-        print('Use last saved setting?')
-        if input('leave blank for yes, or type (yes/no): ') == 'no':
+        print("Use last saved setting?")
+        if input("leave blank for yes, or type (yes/no): ") == "no":
             print()
-            print('Update setting')
+            print("Update setting")
             print()
         else:
             if config.getfloat("Settings", "budget") >= 1000:
@@ -321,59 +371,62 @@ def main():
                 ev_cov = 0.006602509 * config.getfloat("Settings", "budget") * 2
                 ev_mys = 0.001700646 * config.getfloat("Settings", "budget") * 2
                 print()
-                print('Approximation(EV) based on current budget:')
-                print(f'Cost: {int(ev_cost):,} (make sure you have at least this much gold)')
-                print(f'Cov: {ev_cov:.1f}')
-                print(f'mys: {ev_mys:.1f}')
+                print("Approximation(EV) based on current budget:")
+                print(
+                    f"Cost: {int(ev_cost):,} (make sure you have at least this much gold)"
+                )
+                print(f"Cov: {ev_cov:.1f}")
+                print(f"mys: {ev_mys:.1f}")
                 print()
-            
-            input('Press enter to start!')
+
+            input("Press enter to start!")
             print()
-            print('Progress:')
-            ADBSHOP = ShopRefresher(tap_sleep=config.getfloat("Settings", "tap_sleep"),
-                                    budget=config.getfloat("Settings", "budget"),
-                                    ip_port=ip_port)
+            print("Progress:")
+            ADBSHOP = ShopRefresher(
+                tap_sleep=config.getfloat("Settings", "tap_sleep"),
+                budget=config.getfloat("Settings", "budget"),
+                ip_port=ip_port,
+            )
             ADBSHOP.start()
             print()
-            input('press enter to exit...')
+            input("press enter to exit...")
             sys.exit(0)
-    
+
     try:
-        tap_sleep = float(input('Tap sleep(in seconds) Recommend - leave blank for 0.3 sec : '))
+        tap_sleep = float(
+            input("Tap sleep(in seconds) Recommend - leave blank for 0.3 sec : ")
+        )
         tap_sleep = max(0.3, tap_sleep)
     except:
-        print('Default to tap sleep of 0.3 second')
+        print("Default to tap sleep of 0.3 second")
         tap_sleep = 0.3
     print()
     try:
-        budget = float(input('Amount of skystone that you want to spend: '))
+        budget = float(input("Amount of skystone that you want to spend: "))
     except:
-        print('invalid input, default to 1000 skystone budget')
+        print("invalid input, default to 1000 skystone budget")
         budget = 1000
-    
 
     saveConfigFile(tap_sleep=tap_sleep, budget=budget)
 
     if budget >= 1000:
-            ev_cost = 1691.04536 * int(budget) * 2
-            ev_cov = 0.006602509 * int(budget) * 2
-            ev_mys = 0.001700646 * int(budget) * 2
-            print('Approximation(EV) based on current budget:')
-            print(f'Cost: {int(ev_cost):,} (make sure you have at least this much gold)')
-            print(f'Cov: {ev_cov:.1f}')
-            print(f'mys: {ev_mys:.1f}')
-            print()
-    input('Press enter to start!')
-    print('Press ESC to terminate anytime!')
+        ev_cost = 1691.04536 * int(budget) * 2
+        ev_cov = 0.006602509 * int(budget) * 2
+        ev_mys = 0.001700646 * int(budget) * 2
+        print("Approximation(EV) based on current budget:")
+        print(f"Cost: {int(ev_cost):,} (make sure you have at least this much gold)")
+        print(f"Cov: {ev_cov:.1f}")
+        print(f"mys: {ev_mys:.1f}")
+        print()
+    input("Press enter to start!")
+    print("Press ESC to terminate anytime!")
     print()
-    print('Progress:')
-    ADBSHOP = ShopRefresher(tap_sleep=tap_sleep,
-                               budget=budget,
-                               ip_port=ip_port)
+    print("Progress:")
+    ADBSHOP = ShopRefresher(tap_sleep=tap_sleep, budget=budget, ip_port=ip_port)
     ADBSHOP.start()
     print()
-    input('press enter to exit...')
+    input("press enter to exit...")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
