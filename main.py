@@ -81,12 +81,11 @@ class Inventory:
 
 
 class ShopRefresher:
-    def __init__(self, tap_sleep: float = 0.3, budget=None, ip_port=None):
+    def __init__(self, tap_sleep: float, budget: int):
         self.loop_active = False
         self.end_of_refresh = True
         self.tap_sleep = tap_sleep
         self.budget = budget
-        self.ip_port = ip_port
         self.stop_refresh_key = "esc"
 
         self.x_offset = 0
