@@ -313,17 +313,8 @@ def connect_to_device():
     else:
         return False
 
-
-def saveConfigFile(tap_sleep, budget):
-    config = configparser.ConfigParser()
-    config["Settings"] = {
-        "tap_sleep": str(tap_sleep),
-        "budget": str(budget),
-    }
-    with open(CONFIG_FILE, "w") as f:
-        config.write(f)
-    print("Setting saved")
-
+def disconnect_from_device():
+    subprocess.run([ADB_PATH, "disconnect"])
 
 def generate_default_config() -> None:
     config = configparser.ConfigParser()
