@@ -11,6 +11,10 @@ import keyboard
 import numpy as np
 
 
+CONFIG_FILE = "config.ini"
+ASSETS_DIR = "assets"
+
+
 class Item:
     def __init__(self, image=None, price=0, count=0):
         self.image = image
@@ -307,9 +311,6 @@ def getDevices(print_output):
     return devices
 
 
-CONFIG_FILE = "ADBconfig.ini"
-
-
 def saveConfigFile(tap_sleep, budget):
     config = configparser.ConfigParser()
     config["Settings"] = {
@@ -322,10 +323,9 @@ def saveConfigFile(tap_sleep, budget):
 
 
 def main():
-    if not os.path.isdir(os.path.join("adb-assets")):
-        print("adb-assets folder is missing!")
-        input("Press enter to exit ...")
-        sys.exit(0)
+    if not os.path.isdir(os.path.join(ASSETS_DIR)):
+        print(f"{ASSETS_DIR} folder is missing")
+        sys.exit(1)
 
     ip_port = None
     adb_path = os.path.join("adb-assets", "platform-tools", "adb")
