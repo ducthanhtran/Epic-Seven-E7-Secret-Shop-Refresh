@@ -1,16 +1,15 @@
-import subprocess
-import os
-import sys
-from io import BytesIO
-import time
-import csv
-
-import threading
-import cv2
-import numpy as np
-import keyboard
-import random
 import configparser
+import csv
+import os
+import subprocess
+import sys
+import threading
+import time
+
+import cv2
+import keyboard
+import numpy as np
+
 
 class Item:
     def __init__(self, image=None, price=0, count=0):
@@ -365,7 +364,7 @@ def main():
             print(f'mys: {ev_mys:.1f}')
             print()
     input('Press enter to start!')
-    print(f'Press ESC to terminate anytime!')
+    print('Press ESC to terminate anytime!')
     print()
     print('Progress:')
     ADBSHOP = ShopRefresher(tap_sleep=tap_sleep,
