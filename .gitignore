@@ -14,5 +14,5 @@ dist/
 
 # E7SecretShopRefresh.py
 ShopRefreshHistory/
-ADBconfig.ini
+config.ini
 test/
