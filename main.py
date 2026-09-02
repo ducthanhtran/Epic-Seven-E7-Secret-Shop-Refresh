@@ -25,7 +25,7 @@ class Item:
 
 class Inventory:
     def __init__(self):
-        self.inventory = dict()
+        self.inventory = {}
 
     def addItem(self, path: str, name="", price=0, count=0):
         image = cv2.imread(os.path.join("adb-assets", path))
