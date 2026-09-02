@@ -316,6 +316,7 @@ def connect_to_device():
 def disconnect_from_device():
     subprocess.run([ADB_PATH, "disconnect"])
 
+
 def generate_default_config() -> None:
     config = configparser.ConfigParser()
     tap_sleec_sec = float(input("Enter sleep (sec) after each tap\n"))
@@ -357,108 +358,15 @@ def main() -> None:
         print("Could not connect on localhost:5555")
         sys.exit(2)
     print("Connected on localhost:5555")
-    
-    sys.exit(-42)
-    ip_port = None
-    adb_path = os.path.join("adb-assets", "platform-tools", "adb")
-    devices = getDevices(False)
 
-    while len(devices) == 0 or len(devices) > 1:
-        print("ADB Setup")
-        devices = getDevices(True)
-        print(devices)
-        print("Type the ip and port of the device that you want to select or add")
-        print("By leaving it blank it wil default to 127.0.0.1:5555")
-        user_choice = input("Device: ") or "localhost:5555"
-        if user_choice in devices:
-            ip_port = user_choice
-        else:
-            test_connection = subprocess.run(
-                [adb_path, "connect", user_choice], capture_output=True, text=True
-            )
-            print(test_connection.stdout)
-            test_res = test_connection.stdout.split(" ")
-            if test_res[0] == "connected" and test_res[1] == "to":
-                ip_port = user_choice
-                break
-            else:
-                print("Fail to connect, try again")
-
-    if os.path.exists(CONFIG_FILE):
-        config = configparser.ConfigParser()
-        config.read(CONFIG_FILE)
-        print("Last Saved Setting:")
-        for section in config.sections():
-            for key, value in config[section].items():
-                print(f"{key} = {value}")
-        print()
-        print("Use last saved setting?")
-        if input("leave blank for yes, or type (yes/no): ") == "no":
-            print()
-            print("Update setting")
-            print()
-        else:
-            if config.getfloat("Settings", "budget") >= 1000:
-                ev_cost = 1691.04536 * config.getfloat("Settings", "budget") * 2
-                ev_cov = 0.006602509 * config.getfloat("Settings", "budget") * 2
-                ev_mys = 0.001700646 * config.getfloat("Settings", "budget") * 2
-                print()
-                print("Approximation(EV) based on current budget:")
-                print(
-                    f"Cost: {int(ev_cost):,} (make sure you have at least this much gold)"
-                )
-                print(f"Cov: {ev_cov:.1f}")
-                print(f"mys: {ev_mys:.1f}")
-                print()
-
-            input("Press enter to start!")
-            print()
-            print("Progress:")
-            ADBSHOP = ShopRefresher(
-                tap_sleep=config.getfloat("Settings", "tap_sleep"),
-                budget=config.getfloat("Settings", "budget"),
-                ip_port=ip_port,
-            )
-            ADBSHOP.start()
-            print()
-            input("press enter to exit...")
-            sys.exit(0)
-
-    try:
-        tap_sleep = float(
-            input("Tap sleep(in seconds) Recommend - leave blank for 0.3 sec : ")
-        )
-        tap_sleep = max(0.3, tap_sleep)
-    except:
-        print("Default to tap sleep of 0.3 second")
-        tap_sleep = 0.3
-    print()
-    try:
-        budget = float(input("Amount of skystone that you want to spend: "))
-    except:
-        print("invalid input, default to 1000 skystone budget")
-        budget = 1000
-
-    saveConfigFile(tap_sleep=tap_sleep, budget=budget)
-
-    if budget >= 1000:
-        ev_cost = 1691.04536 * int(budget) * 2
-        ev_cov = 0.006602509 * int(budget) * 2
-        ev_mys = 0.001700646 * int(budget) * 2
-        print("Approximation(EV) based on current budget:")
-        print(f"Cost: {int(ev_cost):,} (make sure you have at least this much gold)")
-        print(f"Cov: {ev_cov:.1f}")
-        print(f"mys: {ev_mys:.1f}")
-        print()
-    input("Press enter to start!")
-    print("Press ESC to terminate anytime!")
-    print()
-    print("Progress:")
-    ADBSHOP = ShopRefresher(tap_sleep=tap_sleep, budget=budget, ip_port=ip_port)
+    print("Use ESC to stop the refresher")
+    input("Press enter to start the process...")
+    ADBSHOP = ShopRefresher(
+        tap_sleep=config.getfloat("Settings", "tap_sleep"),
+        budget=config.getfloat("Settings", "budget"),
+        ip_port=ip_port,
+    )
     ADBSHOP.start()
-    print()
-    input("press enter to exit...")
-
-
+    
 if __name__ == "__main__":
     main()
