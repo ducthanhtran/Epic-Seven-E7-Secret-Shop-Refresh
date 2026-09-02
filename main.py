@@ -80,6 +80,34 @@ class Inventory:
             writer.writerow(data)
 
 
+class Device:
+    def __init__(self):
+        self.is_connected: bool = False
+
+    @staticmethod
+    def get_adb_devices():
+        output = subprocess.check_output([ADB_PATH, "devices"], text=True)
+        lines = output.splitlines()
+        # Cut off first line 'List of devices attached' and last
+        # empty line, thus only considering device strings
+        devices = [line.split('\t')[0] for line in lines[1:-1]]
+        return devices
+
+    def connect(self) -> bool:
+        output = subprocess.check_output([ADB_PATH, "connect", "localhost"], text=True)
+        if "connected" in output:
+            self.is_connected = True
+            return True
+        else:
+            self.is_connected = False
+            return False
+        
+    def take_screenshot(self):
+        output = subprocess.check_output([ADB_PATH, "exec-out", "screencap", "-p"])
+        image = np.frombuffer(output, dtype=np.uint8)
+        image_grayscale = cv2.imdecode(image, cv2.IMREAD_GRAYSCALE)
+        return image_grayscale
+
 class ShopRefresher:
     def __init__(self, tap_sleep: float, budget: int):
         self.loop_active = False
@@ -99,6 +127,7 @@ class ShopRefresher:
 
         self.inventory.addItem("cov.png", "Covenant bookmark", 184000)
         self.inventory.addItem("mys.png", "Mystic medal", 280000)
+        self.device = Device()
 
     def start(self):
         self.loop_active = True
@@ -294,21 +323,7 @@ class ShopRefresher:
         time.sleep(self.tap_sleep)
 
 
-def get_adb_devices():
-    output = subprocess.check_output([ADB_PATH, "devices"], text=True)
-    lines = output.splitlines()
-    # Cut off first line 'List of devices attached' and last
-    # empty line, thus only considering device strings
-    devices = [line.split('\t')[0] for line in lines[1:-1]]
-    return devices
 
-
-def connect_to_device():
-    output = subprocess.check_output([ADB_PATH, "connect", "localhost"], text=True)
-    if "connected" in output:
-        return True
-    else:
-        return False
 
 def disconnect_from_device():
     subprocess.run([ADB_PATH, "disconnect"])
@@ -350,7 +365,7 @@ def main() -> None:
 
     config = get_or_create_config()
 
-    devices = get_adb_devices()
+    devices = Device.get_adb_devices()
     if len(devices) != 1:
         print("Found 0 or more than 1 ADB-devices. Exiting")
         sys.exit(2)
