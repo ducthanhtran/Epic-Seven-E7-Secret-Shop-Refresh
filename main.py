@@ -317,6 +317,16 @@ def disconnect_from_device():
     subprocess.run([ADB_PATH, "disconnect"])
 
 
+def get_or_create_config() -> configparser.ConfigParser:
+    config = configparser.ConfigParser()
+    if not os.path.isfile(os.path.join(CONFIG_FILE)):
+        print(f"{CONFIG_FILE} missing. A default file is generated")
+        generate_default_config()
+    config.read(CONFIG_FILE)
+    print(f"Using the following config values from {CONFIG_FILE}:")
+    print_config(CONFIG_FILE)
+    return config
+
 def generate_default_config() -> None:
     config = configparser.ConfigParser()
     tap_sleec_sec = float(input("Enter sleep (sec) after each tap\n"))
@@ -327,6 +337,7 @@ def generate_default_config() -> None:
     }
     with open(CONFIG_FILE, 'w') as out:
         config.write(out)
+
 
 def print_config(config_path: str) -> None:
     config = configparser.ConfigParser()
@@ -340,12 +351,7 @@ def main() -> None:
         print(f"{ASSETS_DIR} folder is missing")
         sys.exit(1)
 
-    if not os.path.isfile(os.path.join(CONFIG_FILE)):
-        print(f"{CONFIG_FILE} missing. A default file is generated")
-        generate_default_config()
-    else:
-        print(f"Using the following config values from {CONFIG_FILE}:")
-        print_config(CONFIG_FILE)
+    config = get_or_create_config()
 
     devices = get_adb_devices()
     if len(devices) != 1:
@@ -361,6 +367,9 @@ def main() -> None:
 
     print("Use ESC to stop the refresher")
     input("Press enter to start the process...")
+
+    sys.exit(42)
+
     ADBSHOP = ShopRefresher(
         tap_sleep=config.getfloat("Settings", "tap_sleep"),
         budget=config.getfloat("Settings", "budget"),
