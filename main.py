@@ -81,7 +81,9 @@ class Inventory:
 
 
 class Device:
-    def __init__(self):
+    def __init__(self, tap_sleep_sec: float, swipe_sleep_sec: float):
+        self.tap_sleep_sec: float = tap_sleep_sec
+        self.swipe_sleep_sec: float = swipe_sleep_sec
         self.is_connected: bool = False
 
     @staticmethod
@@ -108,6 +110,14 @@ class Device:
         image_grayscale = cv2.imdecode(image, cv2.IMREAD_GRAYSCALE)
         return image_grayscale
 
+    def tap(self, x: float, y: float) -> None:
+        subprocess.run([ADB_PATH, "shell", "input", "tap", str(x), str(y)])
+        time.sleep(self.tap_sleep_sec)
+
+    def swipe(self, x1: float, y1: float, x2: float, y2: float):
+        subprocess.run([ADB_PATH, "shell", "input", "swipe", str(x1), str(y1), str(x2), str(y2)])
+        time.sleep(self.swipe_sleep_sec)
+
 class ShopRefresher:
     def __init__(self, tap_sleep: float, budget: int):
         self.loop_active = False
@@ -127,7 +137,7 @@ class ShopRefresher:
 
         self.inventory.addItem("cov.png", "Covenant bookmark", 184000)
         self.inventory.addItem("mys.png", "Mystic medal", 280000)
-        self.device = Device()
+        self.device = Device(tap_sleep, tap_sleep) # TODO: use unified sleep or swipe sleep as well
 
     def start(self):
         self.loop_active = True
