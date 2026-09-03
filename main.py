@@ -34,9 +34,10 @@ class Inventory:
 
 
 class Device:
-    def __init__(self, tap_sleep_sec: float, swipe_sleep_sec: float):
+    def __init__(self, tap_sleep_sec: float, swipe_sleep_sec: float, deviation_px: int):
         self.tap_sleep_sec: float = tap_sleep_sec
         self.swipe_sleep_sec: float = swipe_sleep_sec
+        self.deviation_px: int = deviation_px
         self.is_connected: bool = False
 
     @staticmethod
@@ -64,12 +65,25 @@ class Device:
         return image_grayscale
 
     def tap(self, x: float, y: float) -> None:
-        subprocess.run([ADB_PATH, "shell", "input", "tap", str(x), str(y)])
+        x_dev, y_dev = self._add_deviation(x, y)
+        subprocess.run([ADB_PATH, "shell", "input", "tap",
+                        str(x_dev), str(y_dev)])
         time.sleep(self.tap_sleep_sec)
 
     def swipe(self, x1: float, y1: float, x2: float, y2: float):
-        subprocess.run([ADB_PATH, "shell", "input", "swipe", str(x1), str(y1), str(x2), str(y2)])
+        x1_dev, y1_dev = self._add_deviation(x1, y1)
+        x2_dev, y2_dev = self._add_deviation(x2, y2)
+        subprocess.run([ADB_PATH, "shell", "input", "swipe",
+                        str(x1_dev), str(y1_dev),
+                        str(x2_dev), str(y2_dev)]
+        )
         time.sleep(self.swipe_sleep_sec)
+
+    def _add_deviation(self, x: float, y: float) -> tuple[float, float]:
+        x_dev = x + np.random.normal(0, self.deviation_px)
+        y_dev = y + np.random.normal(0, self.deviation_px)
+        return (x_dev, y_dev)
+
 
 class ShopRefresher:
     def __init__(self, tap_sleep: float, budget: int, device: Device):
@@ -102,15 +116,11 @@ class ShopRefresher:
         while self.loop_active and not self.end_of_refresh:
             self.loop_active = not keyboard.is_pressed(self.stop_refresh_key)
         self.loop_active = False
-        print("Shop refresh terminated!")
 
     def refreshShop(self):
         self.clickShop()
         # time needed for item to drop in after refresh (0.5 second loading + drop 1 second)
         sliding_time = 1.5
-
-        start_time = time.time()
-        milestone = self.budget // 10
 
         x1 = 0.6250 * self.screenwidth
         y1 = 0.7481 * self.screenheight
@@ -298,7 +308,8 @@ def main() -> None:
     print("Found exactly one ADB-device.")
     print(f"Trying to connect to {devices[0]}")
     tap_sleep_sec: float = config.getfloat('Settings', 'tap_sleep_sec')
-    device = Device(tap_sleep_sec, tap_sleep_sec) # TODO: use unified sleep or swipe sleep as well
+    deviation_px = 3 # debug
+    device = Device(tap_sleep_sec, tap_sleep_sec, deviation_px) # TODO: use unified sleep or swipe sleep as well
     if not device.connect():
         print("Could not connect on localhost:5555")
         sys.exit(2)
