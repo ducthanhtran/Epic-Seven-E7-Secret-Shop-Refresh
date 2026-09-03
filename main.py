@@ -152,11 +152,6 @@ class ShopRefresher:
                 break
 
             # swipe
-
-            # adb_process = subprocess.run(
-            #     [self.adb_path]
-            #     + ["shell", "input", "swipe", str(x1), str(y1), str(x1), str(y2)]
-            # )
             self.device.swipe(x1, y1, x1, y2)
             time.sleep(1)
 
@@ -197,10 +192,6 @@ class ShopRefresher:
         # newshop
         x = self.screenwidth * 0.0411
         y = self.screenheight * 0.3835
-        # adb_process = subprocess.run(
-        #     [self.adb_path]
-        #     + ["shell", "input", "tap", str(x), str(y)]
-        # )
         self.device.tap(x, y)
         time.sleep(0.5)
         
@@ -208,20 +199,12 @@ class ShopRefresher:
         # oldshop
         x = self.screenwidth * 0.4406
         y = self.screenheight * 0.2462
-        # adb_process = subprocess.run(
-        #     [self.adb_path]
-        #     + ["shell", "input", "tap", str(x), str(y)]
-        # )
         self.device.tap(x, y)
         time.sleep(0.5)
 
         # newshop
         x = self.screenwidth * 0.0411
         y = self.screenheight * 0.3835
-        # adb_process = subprocess.run(
-        #     [self.adb_path]
-        #     + ["shell", "input", "tap", str(x), str(y)]
-        # )
         self.device.tap(x, y)
         time.sleep(0.5)
 
@@ -231,30 +214,16 @@ class ShopRefresher:
 
         x, y = pos
         self.device.tap(x, y)
-        # adb_process = subprocess.run(
-        #     [self.adb_path]
-        #     + ["shell", "input", "tap", str(x), str(y)]
-        # )
 
         # confirm
         x = self.screenwidth * 0.5677
         y = self.screenheight * 0.7037
-
-        # adb_process = subprocess.run(
-        #     [self.adb_path]
-        #     + ["shell", "input", "tap", str(x), str(y)]
-        # )
         self.device.tap(x, y)
         time.sleep(1)
 
     def clickRefresh(self):
         x = self.screenwidth * 0.1698
         y = self.screenheight * 0.9138
-
-        # adb_process = subprocess.run(
-        #     [self.adb_path]
-        #     + ["shell", "input", "tap", str(x), str(y)]
-        # )
         self.device.tap(x, y)
 
         if not self.loop_active:
@@ -262,11 +231,6 @@ class ShopRefresher:
         # confirm
         x = self.screenwidth * 0.5828
         y = self.screenheight * 0.6411
-
-        # adb_process = subprocess.run(
-        #     [self.adb_path]
-        #     + ["shell", "input", "tap", str(x), str(y)]
-        # )
         self.device.tap(x, y)
 
 
