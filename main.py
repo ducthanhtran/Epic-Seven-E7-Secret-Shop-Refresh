@@ -44,6 +44,13 @@ class Device:
         self.delay_deviation: float = delay_deviation
         self.is_connected: bool = False
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.disconnect()
+        return False
+
     @staticmethod
     def get_adb_devices():
         output = subprocess.check_output([ADB_PATH, "devices"], text=True)
@@ -284,11 +291,9 @@ def main() -> None:
         sys.exit(2)
     
     print(f"Found exactly one ADB-device: {devices[0]}")
-
-    try:
-        print(f"Connecting...")
-        skystones_budget: int = config.getint('Settings', 'skystones_budget')
-        device = Device(devices[0], MOVEMENT_MEAN_PX, MOVEMENT_DEVIATION_PX, DELAY_DEVIATION_SEC)
+    print(f"Connecting...")
+    skystones_budget: int = config.getint('Settings', 'skystones_budget')
+    with Device(devices[0], MOVEMENT_MEAN_PX, MOVEMENT_DEVIATION_PX, DELAY_DEVIATION_SEC) as device:
         if not device.connect():
             print("Could not connect on localhost:5555")
             sys.exit(2)
@@ -296,14 +301,12 @@ def main() -> None:
 
         print("Use ESC to stop the refresher")
         input("Press enter to start the process...")
-
+        print("Running...")
         ADBSHOP = ShopRefresher(
             budget=skystones_budget,
             device=device
         )
         ADBSHOP.start()
-    finally:
-        device.disconnect()
-    
+    print("Disconnected")
 if __name__ == "__main__":
     main()
