@@ -57,6 +57,9 @@ class Device:
         else:
             self.is_connected = False
             return False
+
+    def disconnect(self) -> None:
+        subprocess.run([ADB_PATH, "disconnect"])
         
     def take_screenshot(self):
         output = subprocess.check_output([ADB_PATH, "-s", self.device_id, "exec-out", "screencap", "-p"])
@@ -320,24 +323,28 @@ def main() -> None:
         sys.exit(2)
     
     print(f"Found exactly one ADB-device: {devices[0]}")
-    print(f"Connecting...")
-    delay_deviation_sec: float = config.getfloat('Settings', 'delay_deviation_sec')
-    deviation_px: int = config.getint('Settings', 'deviation_px')
-    skystones_budget: int = config.getint('Settings', 'skystones_budget')
-    device = Device(devices[0], deviation_px, delay_deviation_sec)
-    if not device.connect():
-        print("Could not connect on localhost:5555")
-        sys.exit(2)
-    print(f"Connected on localhost:5555 to {devices[0]}")
 
-    print("Use ESC to stop the refresher")
-    input("Press enter to start the process...")
+    try:
+        print(f"Connecting...")
+        delay_deviation_sec: float = config.getfloat('Settings', 'delay_deviation_sec')
+        deviation_px: int = config.getint('Settings', 'deviation_px')
+        skystones_budget: int = config.getint('Settings', 'skystones_budget')
+        device = Device(devices[0], deviation_px, delay_deviation_sec)
+        if not device.connect():
+            print("Could not connect on localhost:5555")
+            sys.exit(2)
+        print(f"Connected on localhost:5555 to {devices[0]}")
 
-    ADBSHOP = ShopRefresher(
-        budget=skystones_budget,
-        device=device
-    )
-    ADBSHOP.start()
+        print("Use ESC to stop the refresher")
+        input("Press enter to start the process...")
+
+        ADBSHOP = ShopRefresher(
+            budget=skystones_budget,
+            device=device
+        )
+        ADBSHOP.start()
+    finally:
+        device.disconnect()
     
 if __name__ == "__main__":
     main()
