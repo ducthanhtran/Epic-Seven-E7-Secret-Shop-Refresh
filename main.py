@@ -34,10 +34,9 @@ class Inventory:
 
 
 class Device:
-    def __init__(self, tap_sleep_sec: float, swipe_sleep_sec: float, deviation_px: int):
-        self.tap_sleep_sec: float = tap_sleep_sec
-        self.swipe_sleep_sec: float = swipe_sleep_sec
-        self.deviation_px: int = deviation_px
+    def __init__(self, movement_deviation_px: int, delay_deviation: float):
+        self.movement_deviation_px: int = movement_deviation_px
+        self.delay_deviation: float = delay_deviation
         self.is_connected: bool = False
 
     @staticmethod
@@ -65,31 +64,34 @@ class Device:
         return image_grayscale
 
     def tap(self, x: float, y: float) -> None:
-        x_dev, y_dev = self._add_deviation(x, y)
+        x_dev, y_dev = self._add_movement_deviation(x, y)
         subprocess.run([ADB_PATH, "shell", "input", "tap",
                         str(x_dev), str(y_dev)])
-        time.sleep(self.tap_sleep_sec)
+        time.sleep(self._delay())
 
     def swipe(self, x1: float, y1: float, x2: float, y2: float):
-        x1_dev, y1_dev = self._add_deviation(x1, y1)
-        x2_dev, y2_dev = self._add_deviation(x2, y2)
+        x1_dev, y1_dev = self._add_movement_deviation(x1, y1)
+        x2_dev, y2_dev = self._add_movement_deviation(x2, y2)
         subprocess.run([ADB_PATH, "shell", "input", "swipe",
                         str(x1_dev), str(y1_dev),
                         str(x2_dev), str(y2_dev)]
         )
-        time.sleep(self.swipe_sleep_sec)
+        time.sleep(self._delay())
 
-    def _add_deviation(self, x: float, y: float) -> tuple[float, float]:
-        x_dev = x + np.random.normal(0, self.deviation_px)
-        y_dev = y + np.random.normal(0, self.deviation_px)
+    def _add_movement_deviation(self, x: float, y: float) -> tuple[float, float]:
+        x_dev = x + np.random.normal(0, self.movement_deviation_px)
+        y_dev = y + np.random.normal(0, self.movement_deviation_px)
         return (x_dev, y_dev)
+
+    def _delay(self) -> float:
+        delay: float = np.random.normal(0, self.delay_deviation)
+        return delay
 
 
 class ShopRefresher:
-    def __init__(self, tap_sleep: float, budget: int, device: Device):
+    def __init__(self, budget: int, device: Device):
         self.loop_active = False
         self.end_of_refresh = True
-        self.tap_sleep = tap_sleep
         self.budget = budget
         self.stop_refresh_key = "esc"
 
@@ -222,7 +224,6 @@ class ShopRefresher:
             [self.adb_path]
             + ["shell", "input", "tap", str(x), str(y)]
         )
-        time.sleep(self.tap_sleep)
 
         # confirm
         x = self.screenwidth * 0.5677
@@ -232,7 +233,6 @@ class ShopRefresher:
             [self.adb_path]
             + ["shell", "input", "tap", str(x), str(y)]
         )
-        time.sleep(self.tap_sleep)
         time.sleep(1)
 
     def clickRefresh(self):
@@ -243,7 +243,6 @@ class ShopRefresher:
             [self.adb_path]
             + ["shell", "input", "tap", str(x), str(y)]
         )
-        time.sleep(self.tap_sleep)
 
         if not self.loop_active:
             return
@@ -255,7 +254,6 @@ class ShopRefresher:
             [self.adb_path]
             + ["shell", "input", "tap", str(x), str(y)]
         )
-        time.sleep(self.tap_sleep)
 
 
 
@@ -277,9 +275,14 @@ def get_or_create_config() -> configparser.ConfigParser:
 def generate_default_config() -> None:
     config = configparser.ConfigParser()
     tap_sleec_sec = float(input("Enter sleep (sec) after each tap\n"))
+    deviation_px = int(input("Enter deviation (integer pixels) that is added to each position"))
+    delay_deviation = float(input("Enter delay deviation in sec." \
+                                  "After each swipe or tap, a gaussian sampled delay is added."))
     skystones_budget = int(input("Enter skystones budget to be used\n"))
     config["Settings"] = {
         "tap_sleep_sec": tap_sleec_sec,
+        "deviation_px": deviation_px,
+        "delay_deviation_sec": delay_deviation,
         "skystones_budget": skystones_budget
     }
     with open(CONFIG_FILE, 'w') as out:
@@ -307,9 +310,9 @@ def main() -> None:
     
     print("Found exactly one ADB-device.")
     print(f"Trying to connect to {devices[0]}")
-    tap_sleep_sec: float = config.getfloat('Settings', 'tap_sleep_sec')
-    deviation_px = 3 # debug
-    device = Device(tap_sleep_sec, tap_sleep_sec, deviation_px) # TODO: use unified sleep or swipe sleep as well
+    delay_deviation_sec: float = config.getfloat('Settings', 'delay_deviation_sec')
+    deviation_px: int = config.getint('Settings', 'deviation_px')
+    device = Device(deviation_px, delay_deviation_sec)
     if not device.connect():
         print("Could not connect on localhost:5555")
         sys.exit(2)
@@ -318,12 +321,9 @@ def main() -> None:
     print("Use ESC to stop the refresher")
     input("Press enter to start the process...")
 
-    sys.exit(42)
-
     ADBSHOP = ShopRefresher(
-        tap_sleep=config.getfloat("Settings", "tap_sleep"),
-        budget=config.getfloat("Settings", "budget"),
-        device=device,
+        budget=config.getint("Settings", "budget"),
+        device=device
     )
     ADBSHOP.start()
     
