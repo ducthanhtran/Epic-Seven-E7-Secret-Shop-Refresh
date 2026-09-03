@@ -13,6 +13,9 @@ import numpy as np
 CONFIG_FILE = "config.ini"
 ASSETS_DIR = "assets"
 ADB_PATH = os.path.join(ASSETS_DIR, "platform-tools", "adb")
+DELAY_DEVIATION_SEC = 0.5
+MOVEMENT_MEAN_PX = 2
+MOVEMENT_DEVIATION_PX = 2
 
 
 class Item:
@@ -34,8 +37,9 @@ class Inventory:
 
 
 class Device:
-    def __init__(self, device_id: str, movement_deviation_px: int, delay_deviation: float):
+    def __init__(self, device_id: str, movement_mean_px: float, movement_deviation_px: int, delay_deviation: float):
         self.device_id: str = device_id
+        self.movement_mean_px: float = movement_mean_px
         self.movement_deviation_px: int = movement_deviation_px
         self.delay_deviation: float = delay_deviation
         self.is_connected: bool = False
@@ -83,13 +87,13 @@ class Device:
         time.sleep(self._delay())
 
     def _add_movement_deviation(self, x: float, y: float) -> tuple[float, float]:
-        x_dev = x + np.random.normal(0, self.movement_deviation_px)
-        y_dev = y + np.random.normal(0, self.movement_deviation_px)
+        x_dev = x + np.random.normal(self.movement_mean_px, self.movement_deviation_px)
+        y_dev = y + np.random.normal(self.movement_mean_px, self.movement_deviation_px)
         return (x_dev, y_dev)
 
     def _delay(self) -> float:
         delay: float = np.random.normal(0, self.delay_deviation)
-        delay = np.maximum(0.1, delay)
+        delay = np.maximum(0.25, delay)
         return delay
 
 
@@ -130,7 +134,7 @@ class ShopRefresher:
         # time needed for item to drop in after refresh (0.5 second loading + drop 1 second)
         sliding_time = 1.5
 
-        x1 = 0.6250 * self.screenwidth
+        x1 = 0.6250 * self.screenwidth # 1200
         y1 = 0.7481 * self.screenheight
         y2 = 0.3629 * self.screenheight
         while self.loop_active:
@@ -252,15 +256,8 @@ def get_or_create_config() -> configparser.ConfigParser:
 
 def generate_default_config() -> None:
     config = configparser.ConfigParser()
-    tap_sleec_sec = float(input("Enter sleep (sec) after each tap\n"))
-    deviation_px = int(input("Enter deviation (integer pixels) that is added to each position"))
-    delay_deviation = float(input("Enter delay deviation in sec." \
-                                  "After each swipe or tap, a gaussian sampled delay is added."))
     skystones_budget = int(input("Enter skystones budget to be used\n"))
     config["Settings"] = {
-        "tap_sleep_sec": tap_sleec_sec,
-        "deviation_px": deviation_px,
-        "delay_deviation_sec": delay_deviation,
         "skystones_budget": skystones_budget
     }
     with open(CONFIG_FILE, 'w') as out:
@@ -290,10 +287,8 @@ def main() -> None:
 
     try:
         print(f"Connecting...")
-        delay_deviation_sec: float = config.getfloat('Settings', 'delay_deviation_sec')
-        deviation_px: int = config.getint('Settings', 'deviation_px')
         skystones_budget: int = config.getint('Settings', 'skystones_budget')
-        device = Device(devices[0], deviation_px, delay_deviation_sec)
+        device = Device(devices[0], MOVEMENT_MEAN_PX, MOVEMENT_DEVIATION_PX, DELAY_DEVIATION_SEC)
         if not device.connect():
             print("Could not connect on localhost:5555")
             sys.exit(2)
