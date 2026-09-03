@@ -34,7 +34,8 @@ class Inventory:
 
 
 class Device:
-    def __init__(self, movement_deviation_px: int, delay_deviation: float):
+    def __init__(self, device_id: str, movement_deviation_px: int, delay_deviation: float):
+        self.device_id: str = device_id
         self.movement_deviation_px: int = movement_deviation_px
         self.delay_deviation: float = delay_deviation
         self.is_connected: bool = False
@@ -58,21 +59,21 @@ class Device:
             return False
         
     def take_screenshot(self):
-        output = subprocess.check_output([ADB_PATH, "exec-out", "screencap", "-p"])
+        output = subprocess.check_output([ADB_PATH, "-s", self.device_id, "exec-out", "screencap", "-p"])
         image = np.frombuffer(output, dtype=np.uint8)
         image_grayscale = cv2.imdecode(image, cv2.IMREAD_GRAYSCALE)
         return image_grayscale
 
     def tap(self, x: float, y: float) -> None:
         x_dev, y_dev = self._add_movement_deviation(x, y)
-        subprocess.run([ADB_PATH, "shell", "input", "tap",
+        subprocess.run([ADB_PATH, "-s", self.device_id, "shell", "input", "tap",
                         str(x_dev), str(y_dev)])
         time.sleep(self._delay())
 
     def swipe(self, x1: float, y1: float, x2: float, y2: float):
         x1_dev, y1_dev = self._add_movement_deviation(x1, y1)
         x2_dev, y2_dev = self._add_movement_deviation(x2, y2)
-        subprocess.run([ADB_PATH, "shell", "input", "swipe",
+        subprocess.run([ADB_PATH, "-s", self.device_id, "shell", "input", "swipe",
                         str(x1_dev), str(y1_dev),
                         str(x2_dev), str(y2_dev)]
         )
@@ -148,10 +149,11 @@ class ShopRefresher:
 
             # swipe
 
-            adb_process = subprocess.run(
-                [self.adb_path]
-                + ["shell", "input", "swipe", str(x1), str(y1), str(x1), str(y2)]
-            )
+            # adb_process = subprocess.run(
+            #     [self.adb_path]
+            #     + ["shell", "input", "swipe", str(x1), str(y1), str(x1), str(y2)]
+            # )
+            self.device.swipe(x1, y1, x1, y2)
             time.sleep(1)
 
             if not self.loop_active:
@@ -316,16 +318,16 @@ def main() -> None:
         print("Found 0 or more than 1 ADB-devices. Exiting")
         sys.exit(2)
     
-    print("Found exactly one ADB-device.")
-    print(f"Trying to connect to {devices[0]}")
+    print(f"Found exactly one ADB-device: {devices[0]}")
+    print(f"Connecting...")
     delay_deviation_sec: float = config.getfloat('Settings', 'delay_deviation_sec')
     deviation_px: int = config.getint('Settings', 'deviation_px')
     skystones_budget: int = config.getint('Settings', 'skystones_budget')
-    device = Device(deviation_px, delay_deviation_sec)
+    device = Device(devices[0], deviation_px, delay_deviation_sec)
     if not device.connect():
         print("Could not connect on localhost:5555")
         sys.exit(2)
-    print("Connected on localhost:5555")
+    print(f"Connected on localhost:5555 to {devices[0]}")
 
     print("Use ESC to stop the refresher")
     input("Press enter to start the process...")
