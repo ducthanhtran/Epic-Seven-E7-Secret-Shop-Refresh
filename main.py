@@ -245,12 +245,6 @@ class ShopRefresher:
         self.device.tap(x, y)
 
 
-
-
-def disconnect_from_device():
-    subprocess.run([ADB_PATH, "disconnect"])
-
-
 def get_or_create_config() -> configparser.ConfigParser:
     config = configparser.ConfigParser()
     if not os.path.isfile(os.path.join(CONFIG_FILE)):
@@ -260,6 +254,7 @@ def get_or_create_config() -> configparser.ConfigParser:
     print(f"Using the following config values from {CONFIG_FILE}:")
     print_config(CONFIG_FILE)
     return config
+
 
 def generate_default_config() -> None:
     config = configparser.ConfigParser()
