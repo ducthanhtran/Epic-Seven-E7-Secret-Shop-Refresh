@@ -119,6 +119,7 @@ class ShopRefresher:
     def checkKeyPress(self):
         while self.loop_active and not self.end_of_refresh:
             self.loop_active = not keyboard.is_pressed(self.stop_refresh_key)
+            time.sleep(0.05)
         self.loop_active = False
 
     def refreshShop(self):
