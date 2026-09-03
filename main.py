@@ -27,7 +27,7 @@ class Inventory:
         self.inventory: dict[str, Item] = {}
 
     def addItem(self, path: str, name="", price=0, count=0):
-        image = cv2.imread(os.path.join("adb-assets", path))
+        image = cv2.imread(os.path.join(ASSETS_DIR, path))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         newItem = Item(image, price, count)
         self.inventory[name] = newItem
@@ -85,6 +85,7 @@ class Device:
 
     def _delay(self) -> float:
         delay: float = np.random.normal(0, self.delay_deviation)
+        delay = np.maximum(0.1, delay)
         return delay
 
 
@@ -99,7 +100,7 @@ class ShopRefresher:
         self.y_offset = 0
         self.refresh_count = 0
         self.keyboard_thread = threading.Thread(target=self.checkKeyPress)
-        self.adb_path = os.path.join("adb-assets", "platform-tools", "adb")
+        self.adb_path = os.path.join("assets", "platform-tools", "adb")
         self.inventory = Inventory()
         self.screenwidth = 1920
         self.screenheight = 1080
@@ -190,28 +191,32 @@ class ShopRefresher:
         # newshop
         x = self.screenwidth * 0.0411
         y = self.screenheight * 0.3835
-        adb_process = subprocess.run(
-            [self.adb_path]
-            + ["shell", "input", "tap", str(x), str(y)]
-        )
+        # adb_process = subprocess.run(
+        #     [self.adb_path]
+        #     + ["shell", "input", "tap", str(x), str(y)]
+        # )
+        self.device.tap(x, y)
         time.sleep(0.5)
+        
 
         # oldshop
         x = self.screenwidth * 0.4406
         y = self.screenheight * 0.2462
-        adb_process = subprocess.run(
-            [self.adb_path]
-            + ["shell", "input", "tap", str(x), str(y)]
-        )
+        # adb_process = subprocess.run(
+        #     [self.adb_path]
+        #     + ["shell", "input", "tap", str(x), str(y)]
+        # )
+        self.device.tap(x, y)
         time.sleep(0.5)
 
         # newshop
         x = self.screenwidth * 0.0411
         y = self.screenheight * 0.3835
-        adb_process = subprocess.run(
-            [self.adb_path]
-            + ["shell", "input", "tap", str(x), str(y)]
-        )
+        # adb_process = subprocess.run(
+        #     [self.adb_path]
+        #     + ["shell", "input", "tap", str(x), str(y)]
+        # )
+        self.device.tap(x, y)
         time.sleep(0.5)
 
     def clickBuy(self, pos):
@@ -219,30 +224,32 @@ class ShopRefresher:
             return False
 
         x, y = pos
-
-        adb_process = subprocess.run(
-            [self.adb_path]
-            + ["shell", "input", "tap", str(x), str(y)]
-        )
+        self.device.tap(x, y)
+        # adb_process = subprocess.run(
+        #     [self.adb_path]
+        #     + ["shell", "input", "tap", str(x), str(y)]
+        # )
 
         # confirm
         x = self.screenwidth * 0.5677
         y = self.screenheight * 0.7037
 
-        adb_process = subprocess.run(
-            [self.adb_path]
-            + ["shell", "input", "tap", str(x), str(y)]
-        )
+        # adb_process = subprocess.run(
+        #     [self.adb_path]
+        #     + ["shell", "input", "tap", str(x), str(y)]
+        # )
+        self.device.tap(x, y)
         time.sleep(1)
 
     def clickRefresh(self):
         x = self.screenwidth * 0.1698
         y = self.screenheight * 0.9138
 
-        adb_process = subprocess.run(
-            [self.adb_path]
-            + ["shell", "input", "tap", str(x), str(y)]
-        )
+        # adb_process = subprocess.run(
+        #     [self.adb_path]
+        #     + ["shell", "input", "tap", str(x), str(y)]
+        # )
+        self.device.tap(x, y)
 
         if not self.loop_active:
             return
@@ -250,10 +257,11 @@ class ShopRefresher:
         x = self.screenwidth * 0.5828
         y = self.screenheight * 0.6411
 
-        adb_process = subprocess.run(
-            [self.adb_path]
-            + ["shell", "input", "tap", str(x), str(y)]
-        )
+        # adb_process = subprocess.run(
+        #     [self.adb_path]
+        #     + ["shell", "input", "tap", str(x), str(y)]
+        # )
+        self.device.tap(x, y)
 
 
 
@@ -312,6 +320,7 @@ def main() -> None:
     print(f"Trying to connect to {devices[0]}")
     delay_deviation_sec: float = config.getfloat('Settings', 'delay_deviation_sec')
     deviation_px: int = config.getint('Settings', 'deviation_px')
+    skystones_budget: int = config.getint('Settings', 'skystones_budget')
     device = Device(deviation_px, delay_deviation_sec)
     if not device.connect():
         print("Could not connect on localhost:5555")
@@ -322,7 +331,7 @@ def main() -> None:
     input("Press enter to start the process...")
 
     ADBSHOP = ShopRefresher(
-        budget=config.getint("Settings", "budget"),
+        budget=skystones_budget,
         device=device
     )
     ADBSHOP.start()
