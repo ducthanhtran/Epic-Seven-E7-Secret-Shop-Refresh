@@ -1,0 +1,10 @@
+[project]
+name = "epic-seven-e7-secret-shop-refresh"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "keyboard>=0.13.5",
+    "opencv-python-headless>=5.0.0.93",
+]
